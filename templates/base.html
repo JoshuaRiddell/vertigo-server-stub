@@ -1,0 +1,91 @@
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+    <script>
+
+        var mode_socket = io("/control/mode");
+        mode_socket.emit("json", {"mode": "surface"});
+        mode_socket.on("json", function(msg){
+            console.log("/control/mode:");
+            console.log(msg);
+        });
+
+        var param_socket = io("/control/parameters");
+        param_socket.emit("json", [{"name": "seabed_height", "value": 1.0}]);
+        param_socket.on("json", function(msg){
+            console.log("/control/parameters:");
+            console.log(msg);
+        });
+
+        var session_socket = io("/session/state");
+        session_socket.emit("json", {"active": true, "paused": false});
+        session_socket.on("json", function(msg){
+            console.log("/session/state:");
+            console.log(msg);
+        });
+
+        var status_socket = io("/status/updates");
+        status_socket.on("json", function(msg){
+            console.log("/status/updates:");
+            console.log(msg);
+        });
+
+        function quick_post(url, data) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", url);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.send(JSON.stringify(data));
+        }
+
+        var data = {
+            "annotation": {
+                "timestamp": 1572927945.351,
+                "latitude": "-23.907133",
+                "longitude": "152.38742",
+                "class": "Linkia laevigata"
+            },
+            "point": {
+                "x": 0.8,
+                "y": 0.5
+            }
+        }
+        quick_post("/annotation/videoPoint", data);
+
+        var data = {
+            "annotation": {
+                "timestamp": 1572927945.351,
+                "latitude": "-23.907133",
+                "longitude": "152.38742",
+                "class": "Linkia laevigata"
+            },
+            "point": {
+                "topLeft": {
+                "x": 0.8,
+                "y": 0.5
+                },
+                "bottomRight": {
+                "x": 0.8,
+                "y": 0.5
+                }
+            }
+        }
+
+        quick_post("/annotation/videoRectangle", data);
+
+        var data = {
+            "annotation": {
+                "timestamp": 1572927945.351,
+                "latitude": "-23.907133",
+                "longitude": "152.38742",
+                "class": "Linkia laevigata"
+            }
+        }
+        quick_post("/annotation/videoFrame", data);
+
+    </script>
+</head>
+
+<body>
+Hello World
+</body>
+</html>
