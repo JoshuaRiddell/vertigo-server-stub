@@ -4,15 +4,19 @@ from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, send, emit
 import threading
 from time import sleep
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 app.config["TEMPLATES_AUTO_RELOAD"] = True
-socketio = SocketIO(app)
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
 
 @app.route('/')
 def hello_world():
     return render_template("base.html")
+
 
 param_values = {
     "seabed_height": 0.0,
@@ -20,11 +24,13 @@ param_values = {
     "track": 0.0,
 }
 
+
 @app.route('/annotation/videoPoint', methods=["POST"])
 def add_video_point():
     content = request.json
     print("videoPoint:" + str(content))
     return jsonify(isError=False, message="Success", statusCode=200)
+
 
 @app.route('/annotation/videoRectangle', methods=["POST"])
 def add_video_rectangle():
@@ -32,11 +38,13 @@ def add_video_rectangle():
     print("videoRectangle:" + str(content))
     return jsonify(isError=False, message="Success", statusCode=200)
 
+
 @app.route('/annotation/videoFrame', methods=["POST"])
 def add_video_frame():
     content = request.json
     print("videoFrame:" + str(content))
     return jsonify(isError=False, message="Success", statusCode=200)
+
 
 @socketio.on('json', namespace="/control/mode")
 def control_mode(json):
@@ -48,6 +56,7 @@ def control_mode(json):
     print("Mode set to " + mode)
     socketio.emit("json", {"mode": mode}, namespace="/control/mode")
 
+
 @socketio.on('json', namespace="/session/state")
 def session_state(json):
     "Handle change of session state controlled by frontend."
@@ -57,8 +66,11 @@ def session_state(json):
     if type(active) != type(True) or type(paused) != type(True):
         return
 
-    print("Session state set to active:" + str(active) + " paused:" + str(paused))
-    socketio.emit("json", {"active": active, "paused": paused}, namespace="/session/state")
+    print("Session state set to active:" +
+          str(active) + " paused:" + str(paused))
+    socketio.emit("json", {"active": active,
+                           "paused": paused}, namespace="/session/state")
+
 
 @socketio.on('json', namespace="/control/parameters")
 def control_parameters(json):
@@ -68,15 +80,17 @@ def control_parameters(json):
     for param in json:
         handle_parameter_change(param)
 
+
 def handle_parameter_change(param):
     name = param.get("name")
-    value = param.get("value")
+    value = float(param.get("value"))
 
     if name not in param_values.keys():
         return
 
     print("Parameter " + name + " changed to " + str(value))
     param_values[name] = value
+
 
 def publish_function():
     param_state = param_values.copy()
@@ -109,6 +123,7 @@ def publish_function():
         i += 0.4
 
         sleep(1)
+
 
 if __name__ == '__main__':
     t = threading.Thread(target=publish_function)
