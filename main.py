@@ -5,6 +5,7 @@ from flask_socketio import SocketIO, send, emit
 import threading
 from time import sleep
 from flask_cors import CORS
+from dummy_coordinates import gps_coordinates
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -50,7 +51,7 @@ def add_video_frame():
 def control_mode(json):
     "Handle change of mode controlled by frontend."
     mode = json.get("mode")
-    if mode is None or mode not in ["surface", "seabed", "manual"]:
+    if mode is None or mode not in ["surface", "seabed", "manual", "stable"]:
         return
 
     print("Mode set to " + mode)
@@ -96,6 +97,7 @@ def publish_function():
     param_state = param_values.copy()
 
     i = 0
+    coordinates_index = 0
     while True:
         for key in param_state.keys():
             param_state[key] += (param_values[key] - param_state[key]) * 0.5
@@ -120,6 +122,16 @@ def publish_function():
                 "unit": "km"
             }
         ], namespace="/status/updates")
+
+        # send gps coordinates
+        if coordinates_index < len(gps_coordinates):
+            socketio.emit(
+                "json", gps_coordinates[coordinates_index], namespace="/surface/gps")
+            coordinates_index += 1
+        else:
+            coordinates_index = 0
+            i = 0
+
         i += 0.4
 
         sleep(1)
